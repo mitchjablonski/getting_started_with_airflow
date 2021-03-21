@@ -37,9 +37,7 @@ copy_trips_task = S3ToRedshiftOperator(
     redshift_conn_id="redshift",
     aws_credentials_id="aws_credentials",
     s3_bucket="udacity-dend",
-    s3_key="data-pipelines/divvy/partitioned/{execution_date.year}/{execution_date.month}/divvy_trips.csv",
-    region='us-west-2'
-)
+    s3_key="data-pipelines/divvy/partitioned/{execution_date.year}/{execution_date.month}/divvy_trips.csv")
 
 
 check_trips = HasRowsOperator(
@@ -64,8 +62,7 @@ copy_stations_task = S3ToRedshiftOperator(
     aws_credentials_id="aws_credentials",
     s3_bucket="udacity-dend",
     s3_key="data-pipelines/divvy/unpartitioned/divvy_stations_2017.csv",
-    table="stations",
-    region='us-west-2'
+    table="stations"
 )
 
 

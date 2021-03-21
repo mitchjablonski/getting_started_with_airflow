@@ -6,7 +6,15 @@ from airflow.utils.decorators import apply_defaults
 
 class S3ToRedshiftOperator(BaseOperator):
     template_fields = ("s3_key",)
-
+    copy_sql = """
+        COPY {}
+        FROM '{}'
+        ACCESS_KEY_ID '{}'
+        SECRET_ACCESS_KEY '{}'
+        IGNOREHEADER {}
+        DELIMITER '{}'
+        region as 'us-west-2'
+        """
 
     @apply_defaults
     def __init__(self,
@@ -17,7 +25,6 @@ class S3ToRedshiftOperator(BaseOperator):
                  s3_key="",
                  delimiter=",",
                  ignore_headers=1,
-                 region='us-west-2'
                  *args, **kwargs):
 
         super(S3ToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -28,16 +35,7 @@ class S3ToRedshiftOperator(BaseOperator):
         self.delimiter = delimiter
         self.ignore_headers = ignore_headers
         self.aws_credentials_id = aws_credentials_id
-        self.region = region
-        self.copy_sql = """
-        COPY {}
-        FROM '{}'
-        ACCESS_KEY_ID '{}'
-        SECRET_ACCESS_KEY '{}'
-        IGNOREHEADER {}
-        DELIMITER '{}'
-        region as '{}'
-        """
+
 
     def execute(self, context):
         aws_hook = AwsHook(self.aws_credentials_id)
@@ -50,13 +48,12 @@ class S3ToRedshiftOperator(BaseOperator):
         self.log.info("Copying data from S3 to Redshift")
         rendered_key = self.s3_key.format(**context)
         s3_path = "s3://{}/{}".format(self.s3_bucket, rendered_key)
-        formatted_sql = self.copy_sql.format(
+        formatted_sql = S3ToRedshiftOperator.copy_sql.format(
             self.table,
             s3_path,
             credentials.access_key,
             credentials.secret_key,
             self.ignore_headers,
-            self.delimiter,
-            self.region
+            self.delimiter
         )
         redshift.run(formatted_sql)
